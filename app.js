@@ -85,7 +85,7 @@ app.get("/", function(req, res){
 })
 
 // create playlist
-app.post("/", middleware.isLoggedIn, function(req, res) {
+app.post("/", middleware.isLoggedIn, async function(req, res) {
 	// GETTING REDDIT DATA
 	let {PythonShell} = require("python-shell");
 
@@ -94,31 +94,48 @@ app.post("/", middleware.isLoggedIn, function(req, res) {
   		pythonOptions: ['-u'], // get print results in real-time
 	};
 
-	PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
-			if (err) res.redirect("back");
-			// results will be an array of the 50 hot posts from /r/listen to this
-			var re = /[-]+/
-			results.forEach(function(track){
-				// track splits string by the dashes
-				track = track.replace(/\u2013|\u2014/g, "-");
-				track = track.split(re);
-				if(track.length > 1) {
-					console.log(track)
-					artist = track[0]
-					title = track[1].substring(0,track[1].indexOf("["));
-					genre = track[1].match(/\[([^\]]+)/)[1];
-					console.log("artist: ", artist);
-					console.log("title: ", title);
-					console.log("genre: ", genre);
-					// get genre in square brackets
-					// console.log("genre: " + title.match(/\[([^\]]+)/)[1]);;
-				}
-			})
-			res.redirect("/playlist");
-
+	// FILTERING RESULTS BASED ON GENRES OF MY TOP TRACKS
+	var likedGenres = new Set();
+	let data = await spotifyApi.getMyTopArtists();
+	data.body.items.forEach(function(artist) {
+		artist.genres.forEach(function(genre) {
+			likedGenres.add(genre);
+		});
 	});
-});
+	console.log(likedGenres);
 
+	// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+	// 		if (err) res.redirect("back");
+	// 		// results will be an array of the 50 hot posts from /r/listen to this
+	// 		var re = /[-]+/
+	// 		results.forEach(function(track){
+	// 			// track splits string by the dashes
+	// 			track = track.replace(/\u2013|\u2014/g, "-");
+	// 			track = track.split(re);
+	// 			if(track.length > 1) {
+	// 				console.log(track)
+	// 				artist = track[0]
+	// 				title = track[1].substring(0,track[1].indexOf("["));
+	// 				genre = track[1].match(/\[([^\]]+)/)[1];
+	// 				console.log("artist: ", artist);
+	// 				console.log("title: ", title);
+	// 				console.log("genre: ", genre);
+
+					// spotifyApi.createPlaylist(userInfo.id, "Listen to This", {public: false}) // create playlist
+					// 	.then(function(data) {
+					// 		console.log("Created playlist");
+					// 		res.redirect("/playlist");
+					// 	},
+					// 	function(err) {
+					// 		console.log(err);
+					// });
+			// 	}
+			// })
+			//res.redirect("/playlist");
+
+
+	// });
+});
 app.get("/playlist", middleware.isLoggedIn, function(req, res){
 	res.render("playlist/show");
 });
