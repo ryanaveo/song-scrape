@@ -15,4 +15,4 @@ redditPassword = os.environ.get("REDDIT_PASS")
 
 if __name__ == "__main__":
 	redditAPI = reddit.redditAPI(redditClientID, redditSecret, appName, redditUsername, redditPassword)
-	redditAPI.print_info()
+	hotPosts = redditAPI.getHotPosts()
