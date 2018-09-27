@@ -46,6 +46,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// defines who is currently logged in, every template and route will have this
+app.use(function(req, res, next){
+	res.locals.user = req.user;
+	next(); // need this next or it will just stop.
+});
 
 // AUTHENTICATE REQUEST FROM SPOTIFY
 app.get("/auth/spotify", passport.authenticate("spotify", {
@@ -59,7 +64,9 @@ app.get("/callback", passport.authenticate("spotify", {failureRedirect: "/index"
 	res.redirect("/");
 })
 
-
+app.get("/", function(req, res){
+	res.render("index");
+})
 
 // // GETTING REDDIT DATA
 // let {PythonShell} = require("python-shell");
