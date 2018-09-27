@@ -36,6 +36,12 @@ passport.use(
 	},
 	function(accessToken, refreshToken, expires_in, profile, done) {
 		console.log(profile);
+		// where we will store user's tokens and information (GLOBAL)
+		userInfo = {
+			name: profile.displayName,
+			accessToken: accessToken,
+			refreshToken: refreshToken
+		}
 		return done(null, profile);
 	}))
 
@@ -63,30 +69,40 @@ app.get("/auth/spotify", passport.authenticate("spotify", {
 
 app.get("/callback", passport.authenticate("spotify", {failureRedirect: "/"}), function(req, res){
 	console.log("Logged in!");
-	res.redirect("/playlist");
+	res.redirect("/");
 })
 
 app.get("/", function(req, res){
 	res.render("index");
 })
 
+// create playlist
+app.post("/", middleware.isLoggedIn, function(req, res) {
+	console.log(userInfo);
+	// // GETTING REDDIT DATA
+	// let {PythonShell} = require("python-shell");
+
+	// let options = {
+ //  		mode: 'text',
+ //  		pythonOptions: ['-u'], // get print results in real-time
+	// };
+
+	// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+	// 		if (err) res.redirect("back");
+	// 		// results will be an array of the 50 hot posts from /r/listen to this
+
+
+	// });
+});
+
 app.get("/playlist", middleware.isLoggedIn, function(req, res){
-	res.render("playlist");
-})
 
-// // GETTING REDDIT DATA
-// let {PythonShell} = require("python-shell");
-// // let pyshell = new PythonShell("get_listentothis_hot_posts.py");
+});
 
-// let options = {
-//   mode: 'text',
-//   pythonOptions: ['-u'], // get print results in real-time
-// };
-
-// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
-// 	if (err) throw err;
-// 	// results will be an array of the 50 hot posts from /r/listen to this
-// });
+// // SHOW CREATE PLAYLIST FORM
+// app.get("/playlist/", middleware.isLoggedIn, function(req, res){
+// 	res.render("playlist/new");
+// })
 
 
 app.listen(3000, function() {
