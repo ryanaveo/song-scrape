@@ -94,7 +94,7 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
   		pythonOptions: ['-u'], // get print results in real-time
 	};
 
-	// FILTERING RESULTS BASED ON GENRES OF MY TOP TRACKS
+	// get favorite genres from user to compare later with r/listentothis tracks
 	var likedGenres = new Set();
 	let data = await spotifyApi.getMyTopArtists();
 	data.body.items.forEach(function(artist) {
@@ -104,22 +104,26 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 	});
 	console.log(likedGenres);
 
-	// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
-	// 		if (err) res.redirect("back");
-	// 		// results will be an array of the 50 hot posts from /r/listen to this
-	// 		var re = /[-]+/
-	// 		results.forEach(function(track){
-	// 			// track splits string by the dashes
-	// 			track = track.replace(/\u2013|\u2014/g, "-");
-	// 			track = track.split(re);
-	// 			if(track.length > 1) {
-	// 				console.log(track)
-	// 				artist = track[0]
-	// 				title = track[1].substring(0,track[1].indexOf("["));
-	// 				genre = track[1].match(/\[([^\]]+)/)[1];
-	// 				console.log("artist: ", artist);
-	// 				console.log("title: ", title);
-	// 				console.log("genre: ", genre);
+	PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+			if (err) res.redirect("back");
+			// results will be an array of the 50 hot posts from /r/listen to this
+			var re = /[-]+/
+			results.forEach(function(track){
+				// track splits string by the dashes
+				track = track.replace(/\u2013|\u2014/g, "-");
+				track = track.split(re);
+				if(track.length == 2) {
+					var artist = track[0]
+					var title = track[1].substring(0,track[1].indexOf("["));
+					var genre = track[1].match(/\[([^\]]+)/)[1];
+					if (genre) {
+						genre = genre.toLowerCase();
+					}
+					if (likedGenres.has(genre)) {
+						console.log("artist: ", artist);
+						console.log("title: ", title);
+						console.log("genre: ", genre);
+					}
 
 					// spotifyApi.createPlaylist(userInfo.id, "Listen to This", {public: false}) // create playlist
 					// 	.then(function(data) {
@@ -129,12 +133,12 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 					// 	function(err) {
 					// 		console.log(err);
 					// });
-			// 	}
-			// })
-			//res.redirect("/playlist");
+				}
+			})
+			res.redirect("/playlist");
 
 
-	// });
+	});
 });
 app.get("/playlist", middleware.isLoggedIn, function(req, res){
 	res.render("playlist/show");
