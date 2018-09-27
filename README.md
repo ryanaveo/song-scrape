@@ -24,7 +24,7 @@ Give examples
 
 ```
 pipenv --three install
-pipenv run
+pipenv run python app.py
 ```
 
 ## Goals
