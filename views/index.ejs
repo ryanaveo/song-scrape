@@ -1,10 +1,17 @@
 <%include ./partials/header%>
+
 <h1>Welcome to Song Scrape</h1>
+
 <%if (!user) {%>
+
 	<p>Please Log In</p>
 	<a href="/auth/spotify">Login with Spotify</a>
-<%} else %>
+
+<%} else {%>
+
 	<form action="/" method="POST">
 		<button>Create Playlist</button>
 	</form>
+	
+<%}%>
 <%include ./partials/footer%>

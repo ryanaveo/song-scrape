@@ -6,8 +6,15 @@ const express = require("express"),
       session = require("express-session"),
       middleware = require("./middleware"),
       SpotifyStrategy = require("passport-spotify").Strategy,
+      SpotifyWebApi = require("spotify-web-api-node"),
       spotifyKey = process.env.SPOTIFYKEY,
       spotifySecret = process.env.SPOTIFYSECRET;
+
+var spotifyApi = new SpotifyWebApi({
+	clientId: spotifyKey,
+	clientSecret: spotifySecret,
+	callbackURL: "http://localhost:3000/callback"
+});
 
 // APP CONFIGURATIONS
 app.use(bodyParser.urlencoded({extended: true}));
@@ -37,10 +44,11 @@ passport.use(
 	function(accessToken, refreshToken, expires_in, profile, done) {
 		console.log(profile);
 		// where we will store user's tokens and information (GLOBAL)
+		spotifyApi.setAccessToken(accessToken);
+		spotifyApi.setRefreshToken(refreshToken);
 		userInfo = {
 			name: profile.displayName,
-			accessToken: accessToken,
-			refreshToken: refreshToken
+			id: profile.id
 		}
 		return done(null, profile);
 	}))
@@ -78,25 +86,41 @@ app.get("/", function(req, res){
 
 // create playlist
 app.post("/", middleware.isLoggedIn, function(req, res) {
-	console.log(userInfo);
-	// // GETTING REDDIT DATA
-	// let {PythonShell} = require("python-shell");
+	// GETTING REDDIT DATA
+	let {PythonShell} = require("python-shell");
 
-	// let options = {
- //  		mode: 'text',
- //  		pythonOptions: ['-u'], // get print results in real-time
-	// };
+	let options = {
+  		mode: 'text',
+  		pythonOptions: ['-u'], // get print results in real-time
+	};
 
-	// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
-	// 		if (err) res.redirect("back");
-	// 		// results will be an array of the 50 hot posts from /r/listen to this
+	PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+			if (err) res.redirect("back");
+			// results will be an array of the 50 hot posts from /r/listen to this
+			var re = /[-]+/
+			results.forEach(function(track){
+				// track splits string by the dashes
+				track = track.replace(/\u2013|\u2014/g, "-");
+				track = track.split(re);
+				if(track.length > 1) {
+					console.log(track)
+					artist = track[0]
+					title = track[1].substring(0,track[1].indexOf("["));
+					genre = track[1].match(/\[([^\]]+)/)[1];
+					console.log("artist: ", artist);
+					console.log("title: ", title);
+					console.log("genre: ", genre);
+					// get genre in square brackets
+					// console.log("genre: " + title.match(/\[([^\]]+)/)[1]);;
+				}
+			})
+			res.redirect("/playlist");
 
-
-	// });
+	});
 });
 
 app.get("/playlist", middleware.isLoggedIn, function(req, res){
-
+	res.render("playlist/show");
 });
 
 // // SHOW CREATE PLAYLIST FORM
