@@ -17,7 +17,7 @@ class redditAPI:
 		self._listentothis = self._data.subreddit("listentothis")
 	def getHotPosts(self):
 		'''
-		returns a list of hot posts on r/listentothis
+		returns a list of the top 50 hot posts on r/listentothis
 		'''
 		return self._listentothis.hot(limit=50)
 

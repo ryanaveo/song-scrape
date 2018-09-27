@@ -1,0 +1,23 @@
+{
+  "name": "song-scrape",
+  "version": "1.0.0",
+  "description": "This app will take genres that you like and scrape reddit's /r/listentothis to make discovering new songs easier for you. These songs will be put in a spotify playlist for you.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanaveo/song-scrape.git"
+  },
+  "author": "Ryan Aveo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryanaveo/song-scrape/issues"
+  },
+  "homepage": "https://github.com/ryanaveo/song-scrape#readme",
+  "dependencies": {
+    "express": "^4.16.3",
+    "python-shell": "^1.0.4"
+  }
+}
