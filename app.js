@@ -108,21 +108,31 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 			if (err) res.redirect("back");
 			// results will be an array of the 50 hot posts from /r/listen to this
 			var re = /[-]+/
-			results.forEach(function(track){
+			results.forEach( async function(track){
 				// track splits string by the dashes
 				track = track.replace(/\u2013|\u2014/g, "-");
 				track = track.split(re);
 				if(track.length == 2) {
-					var artist = track[0]
+					var artist = track[0].trim().toLowerCase();
 					var title = track[1].substring(0,track[1].indexOf("["));
 					var genre = track[1].match(/\[([^\]]+)/)[1];
 					if (genre) {
 						genre = genre.toLowerCase();
 					}
 					if (likedGenres.has(genre)) {
-						console.log("artist: ", artist);
-						console.log("title: ", title);
-						console.log("genre: ", genre);
+						let data = await spotifyApi.searchTracks(title + " " + artist, {limit: 3});
+
+						tracks:
+							for (let i = 0; i < data.body.tracks.items.length; i++) {
+								song = data.body.tracks.items[i];
+								artists:
+									for (let i = 0; i < song.artists.length; i++) {
+										if (song.artists[i].name.toLowerCase() == artist) {
+											console.log(artist);
+											break tracks;
+										}
+									}
+							}
 					}
 
 					// spotifyApi.createPlaylist(userInfo.id, "Listen to This", {public: false}) // create playlist
