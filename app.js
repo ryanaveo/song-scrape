@@ -4,6 +4,7 @@ const express = require("express"),
       bodyParser = require("body-parser"),
       passport = require("passport"),
       session = require("express-session"),
+      middleware = require("./middleware"),
       SpotifyStrategy = require("passport-spotify").Strategy,
       spotifyKey = process.env.SPOTIFYKEY,
       spotifySecret = process.env.SPOTIFYSECRET;
@@ -31,7 +32,7 @@ passport.use(
 	{
 		clientID: spotifyKey,
 		clientSecret: spotifySecret,
-		callbackURL: "http://localhost:3000/playlist"
+		callbackURL: "http://localhost:3000/callback"
 	},
 	function(accessToken, refreshToken, expires_in, profile, done) {
 		console.log(profile);
@@ -60,12 +61,17 @@ app.get("/auth/spotify", passport.authenticate("spotify", {
 	function(req,res) {}
 );
 
-app.get("/callback", passport.authenticate("spotify", {failureRedirect: "/index"}), function(req, res){
-	res.redirect("/");
+app.get("/callback", passport.authenticate("spotify", {failureRedirect: "/"}), function(req, res){
+	console.log("Logged in!");
+	res.redirect("/playlist");
 })
 
 app.get("/", function(req, res){
 	res.render("index");
+})
+
+app.get("/playlist", middleware.isLoggedIn, function(req, res){
+	res.render("playlist");
 })
 
 // // GETTING REDDIT DATA

@@ -1,2 +1,7 @@
 <%include ./partials/header%>
+<%if (user) {%>
+	<h1>You are logged in!</h1>
+<%} else {%>
+	<h1>Not logged in</h1>
+<%}%>
 <%include ./partials/footer%>
