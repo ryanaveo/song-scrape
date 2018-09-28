@@ -105,54 +105,73 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 	var playlistExists = false;
 	var playlistData = await spotifyApi.getUserPlaylists();
 	var playlistData = playlistData.body.items
+
+	// FIX LATER MESSY...REDUNDANT?
 	for (let i = 0; i < playlistData.length; i++) {
 		if (playlistData[i].name == "Listen to This" && playlistData[i].owner["display_name"] == userInfo.name) {
 			playlistExists = true;
+			var playlistID = playlistData[i].id;
 		}
 	}
 
 	if (!playlistExists) {
 		await spotifyApi.createPlaylist(userInfo.id, "Listen to This", {public: true}); // create playlist
+		for (let i = 0; i < playlistData.length; i++) {
+			if (playlistData[i].name == "Listen to This" && playlistData[i].owner["display_name"] == userInfo.name) {
+				playlistID = playlistData[i].id;
+			}
+		}
 	}
 
-	// PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
-	// 		if (err) res.redirect("back");
-	// 		// results will be an array of the 50 hot posts from /r/listen to this
-	// 		var re = /[-]+/
-	// 		results.forEach( async function(track){
-	// 			// track splits string by the dashes
-	// 			track = track.replace(/\u2013|\u2014/g, "-");
-	// 			track = track.split(re);
-	// 			if(track.length == 2) {
-	// 				var artist = track[0].trim().toLowerCase();
-	// 				var title = track[1].substring(0,track[1].indexOf("["));
-	// 				var genre = track[1].match(/\[([^\]]+)/)[1];
-	// 				if (genre) {
-	// 					genre = genre.toLowerCase();
-	// 				}
-	// 				if (likedGenres.has(genre)) {
-	// 					let data = await spotifyApi.searchTracks(title + " " + artist, {limit: 3});
+	PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+		if (err) res.redirect("back");
+			// results will be an array of the 50 hot posts from /r/listen to this
+		var re = /[-]+/
+		var trackURIs = []
 
-	// 					tracks:
-	// 						for (let i = 0; i < data.body.tracks.items.length; i++) {
-	// 							song = data.body.tracks.items[i];
-	// 							artists:
-	// 								for (let i = 0; i < song.artists.length; i++) {
-	// 									if (song.artists[i].name.toLowerCase() == artist) {
-	// 										console.log(artist);
-	// 										console.log(song.name);
-	// 										break tracks;
-	// 									}
-	// 								}
-	// 						}
-	// 				}
-	// 			}
-	// 		})
+		async function asyncForEach(array) {
+			for (let index = 0; index < array.length; index++) {
+				track = array[index].replace(/\u2013|\u2014/g, "-");
+				track = track.split(re);
+				if(track.length == 2) {
+					var artist = track[0].trim().toLowerCase();
+					var title = track[1].substring(0,track[1].indexOf("["));
+					var genre = track[1].match(/\[([^\]]+)/)[1];
+					if (genre) {
+						genre = genre.toLowerCase();
+					}
+					if (likedGenres.has(genre)) {
+						let data = await spotifyApi.searchTracks(title + " " + artist, {limit: 3});
+
+						tracks:
+							for (let i = 0; i < data.body.tracks.items.length; i++) {
+								song = data.body.tracks.items[i];
+								artists:
+									for (let i = 0; i < song.artists.length; i++) {
+										if (song.artists[i].name.toLowerCase() == artist) {
+											console.log(song.uri);
+											trackURIs.push(song["uri"]);
+											break tracks;
+										}
+									}
+							}
+					}
+				}
+			}
+			if (playlistExists) {
+				console.log(trackURIs);
+				await spotifyApi.replaceTracksInPlaylist(playlistID, trackURIs);
+			} else {
+				await spotifyApi.addTracksToPlaylist(playlistID, trackURIs);
+			}
 			res.redirect("/playlist");
+		}
 
+		asyncForEach(results);
 
-	// });
+	})
 });
+
 app.get("/playlist", middleware.isLoggedIn, function(req, res){
 	res.render("playlist/show");
 });
