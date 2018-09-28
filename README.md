@@ -43,8 +43,11 @@ pipenv run node app.js
 
 ## Goals
 
-~* Authenticate user with Spotify account~
-~* Get list of genres that user likes~
-~* Scrape subreddit, find songs I haven't listened to before based on liked genres~
-~* generate a spotify playlist of these songs (if on spotify)~
-~* Make this a web app~
+* ~Authenticate user with Spotify account~
+* ~Get list of genres that user likes~
+* ~Scrape subreddit, find songs based on liked genres~
+* ~Generate a spotify playlist of these songs (if on spotify)~
+* ~Make this a web app~
+* Stylize Web App
+* Find songs with artists or titles with dashes in them
+* Find songs with multiple genres listed on reddit. Also dashes between genres
