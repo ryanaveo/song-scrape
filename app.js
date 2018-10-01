@@ -1,20 +1,12 @@
-const express = require("express"),
-      app     = express(),
-      port    = 3000,
-      bodyParser = require("body-parser"),
-      passport = require("passport"),
-      session = require("express-session"),
-      middleware = require("./middleware"),
+const express         = require("express"),
+      app             = express(),
+      config          = require("./config/main"),
+      bodyParser      = require("body-parser"),
+      passport        = require("passport"),
+      session         = require("express-session"),
+      middleware      = require("./middleware"),
       SpotifyStrategy = require("passport-spotify").Strategy,
-      SpotifyWebApi = require("spotify-web-api-node"),
-      spotifyKey = process.env.SPOTIFYKEY,
-      spotifySecret = process.env.SPOTIFYSECRET;
-
-var spotifyApi = new SpotifyWebApi({
-	clientId: spotifyKey,
-	clientSecret: spotifySecret,
-	callbackURL: "http://localhost:3000/callback"
-});
+      spotify         = require("./api/spotify");
 
 // APP CONFIGURATIONS
 app.use(bodyParser.urlencoded({extended: true}));
@@ -22,9 +14,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 
-
 // PASSPORT SESSION SETUP
-// since no database of users, complete spotify profile is serialized and deserialized
 passport.serializeUser(function(user, done) {
   done(null, user);
 });
@@ -37,20 +27,21 @@ passport.deserializeUser(function(obj, done) {
 passport.use(
 	new SpotifyStrategy(
 	{
-		clientID: spotifyKey,
-		clientSecret: spotifySecret,
+		clientID: config.spotifyKey,
+		clientSecret: config.spotifySecret,
 		callbackURL: "http://localhost:3000/callback"
 	},
 	function(accessToken, refreshToken, expires_in, profile, done) {
 		// where we will store user's tokens and information (GLOBAL)
-		spotifyApi.setAccessToken(accessToken);
-		spotifyApi.setRefreshToken(refreshToken);
+		spotify.API.setAccessToken(accessToken);
+		spotify.API.setRefreshToken(refreshToken);
 		userInfo = {
 			name: profile.displayName,
 			id: profile.id
 		}
 		return done(null, profile);
-	}))
+	})
+)
 
 app.use(session({
 	secret: "avocado toast",
@@ -68,7 +59,7 @@ app.use(function(req, res, next){
 
 // AUTHENTICATE REQUEST FROM SPOTIFY
 app.get("/auth/spotify", passport.authenticate("spotify", {
-	scope: ["playlist-modify-public","user-top-read"],
+	scope: ["playlist-modify-private","user-top-read", "playlist-read-private"],
 	showDialog: true
 }),
 	function(req,res) {}
@@ -94,80 +85,23 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 	};
 
 	// get favorite genres from user to compare later with r/listentothis tracks
-	var likedGenres = new Set();
-	let data = await spotifyApi.getMyTopArtists();
-	data.body.items.forEach(function(artist) {
-		artist.genres.forEach(function(genre) {
-			likedGenres.add(genre);
-		});
-	});
-
-	var playlistExists = false;
-	var playlistData = await spotifyApi.getUserPlaylists();
-	var playlistData = playlistData.body.items
-
-	// FIX LATER MESSY...REDUNDANT?
-	for (let i = 0; i < playlistData.length; i++) {
-		if (playlistData[i].name == "Listen to This" && playlistData[i].owner["display_name"] == userInfo.name) {
-			playlistExists = true;
-			var playlistID = playlistData[i].id;
-		}
+	var likedGenres = await spotify.getLikedGenres();
+	var playlistID = await spotify.getPlaylistID(userInfo);
+	if (!playlistID) {
+		playlistID = await spotify.createPlaylist();
 	}
 
-	if (!playlistExists) {
-		await spotifyApi.createPlaylist(userInfo.id, "Listen to This", {public: true}); // create playlist
-		for (let i = 0; i < playlistData.length; i++) {
-			if (playlistData[i].name == "Listen to This" && playlistData[i].owner["display_name"] == userInfo.name) {
-				playlistID = playlistData[i].id;
-			}
-		}
-	}
-
-	PythonShell.run("get_listentothis_hot_posts.py", options, function(err, results) {
+	// 	results will be an array of the 50 hot posts from /r/listen to this
+	PythonShell.run("get_listentothis_hot_posts.py", options, async function(err, results) {
 		if (err) res.redirect("back");
-			// results will be an array of the 50 hot posts from /r/listen to this
 		var re = /[-]+/
 		var trackURIs = []
-
-		async function asyncForEach(array) {
-			for (let index = 0; index < array.length; index++) {
-				track = array[index].replace(/\u2013|\u2014/g, "-");
-				track = track.split(re);
-				if(track.length == 2) {
-					var artist = track[0].trim().toLowerCase();
-					var title = track[1].substring(0,track[1].indexOf("["));
-					var genre = track[1].match(/\[([^\]]+)/)[1];
-					if (genre) {
-						genre = genre.toLowerCase();
-					}
-					if (likedGenres.has(genre)) {
-						let data = await spotifyApi.searchTracks(title + " " + artist, {limit: 3});
-
-						tracks:
-							for (let i = 0; i < data.body.tracks.items.length; i++) {
-								song = data.body.tracks.items[i];
-								artists:
-									for (let i = 0; i < song.artists.length; i++) {
-										if (song.artists[i].name.toLowerCase() == artist) {
-											console.log(song.uri);
-											trackURIs.push(song["uri"]);
-											break tracks;
-										}
-									}
-							}
-					}
-				}
-			}
-			if (playlistExists) {
-				console.log(trackURIs);
-				await spotifyApi.replaceTracksInPlaylist(playlistID, trackURIs);
-			} else {
-				await spotifyApi.addTracksToPlaylist(playlistID, trackURIs);
-			}
-			res.redirect("/playlist");
-		}
-
-		asyncForEach(results);
+		console.time("Creating Query and Adding to Playlist");
+		var queries = await spotify.createQueryList(results, likedGenres);
+		var trackURIs = await spotify.createTrackURIList(queries);
+		spotify.addSongs(trackURIs, playlistID);
+		console.timeEnd("Creating Query and Adding to Playlist");
+		res.redirect("/playlist");
 
 	})
 });
@@ -176,12 +110,6 @@ app.get("/playlist", middleware.isLoggedIn, function(req, res){
 	res.render("playlist/show");
 });
 
-// // SHOW CREATE PLAYLIST FORM
-// app.get("/playlist/", middleware.isLoggedIn, function(req, res){
-// 	res.render("playlist/new");
-// })
-
-
-app.listen(3000, function() {
-	console.log("Server running on localhost:" + port);
+app.listen(config.port, function() {
+	console.log("Server running on localhost:" + config.port);
 })
