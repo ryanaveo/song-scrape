@@ -50,4 +50,5 @@ pipenv run node app.js
 * ~Make this a web app~
 * Stylize Web App
 * Find songs with artists or titles with dashes in them
-* Find songs with multiple genres listed on reddit. Also dashes between genres
+* ~Find songs with multiple genres listed on reddit~ 
+* Find songs with dashes in genres
