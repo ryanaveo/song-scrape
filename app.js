@@ -91,7 +91,7 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 	if (!playlist.id) {
 		playlist.id = await spotify.createPlaylist();
 	}
-	playlistURL = "https://open.spotify.com/user/" + playlist.owner + "/playlist/" + playlist.id
+	var playlistURL = "https://open.spotify.com/user/" + playlist.owner + "/playlist/" + playlist.id
 	var embedRequestOptions = {
 		method: "GET",
 		uri: "https://embed.spotify.com/oembed",
