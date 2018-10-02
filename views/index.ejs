@@ -1,17 +1,23 @@
 <%include ./partials/header%>
 
-<h1>Welcome to Song Scrape</h1>
+<div class="container">
+	<div class="jumbotron">
+	<div id="content">
+	<%if (!user) {%>
+			<h1 class="display-4">Song Scrape</h1>
+	  		<p class="lead">Tired of looking for new songs? We've got you covered.</p>
+	  		<p>Just log in with your Spotify account, and we'll search reddit's r/listentothis for on the rise/overlooked that songs you might like based on your favorite genres and put them together in a playlist.</p>
+	  		<a class="btn btn-outline-success" href="/auth/spotify" role="button">Log in with Spotify</a>
 
-<%if (!user) {%>
+	<%} else {%>
 
-	<p>Please Log In</p>
-	<a href="/auth/spotify">Login with Spotify</a>
-
-<%} else {%>
-
-	<form action="/" method="POST">
-		<button>Create Playlist</button>
-	</form>
+		<h1 class="display-4">You're all Set!</h1>
+		<form action="/" method="POST">
+			<button id="create-playlist-btn" class="btn btn-outline-success">Create Playlist</button>
+		</form>
+	</div>
+	</div>
+</div>
 	
 <%}%>
 <%include ./partials/footer%>
