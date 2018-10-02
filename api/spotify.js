@@ -21,18 +21,28 @@ spotify.getLikedGenres = async function() {
 }
 
 /*
-	Returns playlist ID if "Listen to This playlist exits. Returns an empty string if it doesn't"
+	Returns playlist object if "Listen to This" playlist exits.
 */
-spotify.getPlaylistID = async function(userInfo) {
+spotify.getPlaylist = async function(userInfo) {
 	var playlistData = await this.API.getUserPlaylists();
 	var playlistData = playlistData.body.items
+	var id = "";
+	var url = "";
+	var owner = "";
 
 	for (let i = 0; i < playlistData.length; i++) {
 		if (playlistData[i].name == "Listen to This" && playlistData[i].owner["display_name"] == userInfo.name) {
-			return playlistData[i].id;
+			id = playlistData[i].id;
+			url = playlistData[i].external_urls.spotify;
+			owner = playlistData[i].owner.id;
 		}
 	}
-	return "";
+	var playlist = {
+		id: id,
+		uri: url,
+		owner: owner
+	}
+	return playlist;
 }
 
 /*
@@ -101,9 +111,7 @@ spotify.createTrackURIList = async function(queries) {
 }
 
 spotify.addSongs = async function(trackURIs,playlistID) {
-	console.log(trackURIs);
 	var data = await this.API.replaceTracksInPlaylist(playlistID, trackURIs);
-	console.log(data);
 	return data;
 }
 

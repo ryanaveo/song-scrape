@@ -5,6 +5,7 @@ const express         = require("express"),
       passport        = require("passport"),
       session         = require("express-session"),
       middleware      = require("./middleware"),
+      request         = require("request"),
       SpotifyStrategy = require("passport-spotify").Strategy,
       spotify         = require("./api/spotify");
 
@@ -86,11 +87,25 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 
 	// get favorite genres from user to compare later with r/listentothis tracks
 	var likedGenres = await spotify.getLikedGenres();
-	var playlistID = await spotify.getPlaylistID(userInfo);
-	if (!playlistID) {
-		playlistID = await spotify.createPlaylist();
+	var playlist = await spotify.getPlaylist(userInfo);
+	if (!playlist.id) {
+		playlist.id = await spotify.createPlaylist();
 	}
-
+	playlistURL = "https://open.spotify.com/user/" + playlist.owner + "/playlist/" + playlist.id
+	var embedRequestOptions = {
+		method: "GET",
+		uri: "https://embed.spotify.com/oembed",
+		qs: {
+			url: playlistURL,
+			format: "json"
+		},
+		json: true,
+		headers: {'user-agent': 'node.js'}
+	}
+	var embedHTML = ""
+	request(embedRequestOptions, function(err, response, body) {
+		embedHTML = response.body.html;
+	});
 	// 	results will be an array of the 50 hot posts from /r/listen to this
 	PythonShell.run("get_listentothis_hot_posts.py", options, async function(err, results) {
 		if (err) res.redirect("back");
@@ -99,9 +114,9 @@ app.post("/", middleware.isLoggedIn, async function(req, res) {
 		console.time("Creating Query and Adding to Playlist");
 		var queries = await spotify.createQueryList(results, likedGenres);
 		var trackURIs = await spotify.createTrackURIList(queries);
-		spotify.addSongs(trackURIs, playlistID);
+		spotify.addSongs(trackURIs, playlist.id);
 		console.timeEnd("Creating Query and Adding to Playlist");
-		res.redirect("/playlist");
+		res.render("playlist/show", {embedHTML: embedHTML});
 
 	})
 });
