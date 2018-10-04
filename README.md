@@ -48,7 +48,8 @@ pipenv run node app.js
 * ~Scrape subreddit, find songs based on liked genres~
 * ~Generate a spotify playlist of these songs (if on spotify)~
 * ~Make this a web app~
-* Stylize Web App
+* ~Stylize Web App~
 * Find songs with artists or titles with dashes in them
 * ~Find songs with multiple genres listed on reddit~ 
 * Find songs with dashes in genres
+* Embed created playlist in web page
