@@ -18,9 +18,6 @@ Install:
 * pipenv
 * npm
 * node
-```
-Give examples
-```
 
 ### Setup
 
@@ -52,4 +49,4 @@ pipenv run node app.js
 * Find songs with artists or titles with dashes in them
 * ~Find songs with multiple genres listed on reddit~ 
 * Find songs with dashes in genres
-* Embed created playlist in web page
+* ~Embed created playlist in web page~
