@@ -65,7 +65,11 @@ spotify.createQueryList = async function(redditPosts, likedGenres) {
 			track = track.split(re);
 			if(track.length == 2) {
 				var artist = track[0].trim().toLowerCase();
-				var title = track[1].substring(0,track[1].indexOf("[")).trim();
+				var titleIndex = track[1].indexOf("[");
+				if (titleIndex == -1) {
+					continue;
+				}
+				var title = track[1].substring(0,titleIndex).trim();
 				var genre = track[1].match(/\[([^\]]+)/)[1];
 				if (genre) {
 					genre = genre.toLowerCase();
