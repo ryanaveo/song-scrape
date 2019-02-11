@@ -1,6 +1,6 @@
 # Song Scrape
 
-This app will take genres that you like based on your top listened to artists on Spotify and scrape reddit's /r/listentothis posts to create a playlist for you, making discovering new songs and lesser known bands easier.
+This app will take genres that you like based on your top listened to artists on Spotify and scrape reddit's /r/listentothis posts to create a playlist for you, making discovering new songs from lesser known artists easier.
 
 ## Getting Started
 
@@ -29,7 +29,7 @@ pipenv run node app.js
 
 ### How it Works
 
-**Note** : If you have a playlist named "Listen to This" already. All of its tracks will be replaced with songs generated from the app. Please rename your playlist to avoid this.
+**Note** : If you have a playlist named "Listen to This" already, all of its tracks will be replaced with songs generated from the app. Please **rename** your playlist to avoid this.
 
 1. User will authorize application to access user data and create a playlist. 
 2. Once authorized, click 'Create Playlist' to start.
